@@ -1,5 +1,7 @@
 from models import FinancialProfile, FinancialEvent, FinancialScenario, MonthlyResult
 
+from summary import summarize_simulation
+
 from calculations import (
     calculate_total_income,
     calculate_total_fixed_expenses,
@@ -110,3 +112,20 @@ for result in results:
         f"Goal {'Met' if result.savings_goal_met else 'Not Met'} | "
         f"Buffer {'Safe' if result.buffer_safe else 'Breached'}"
     )
+
+    print("\nSUMMARY")
+
+    summary = summarize_simulation(
+        results,
+        profile.minimum_buffer,
+    )
+
+    lowest_savings = summary[0]
+    buffer_breached = summary[1]
+    first_buffer_breach_month = summary[2]
+    savings_goal_missed_months = summary[3]
+
+    print(f"Lowest savings: ₹{lowest_savings:,.0f}")
+    print(f"Buffer breached: {buffer_breached}")
+    print(f"First buffer breach month: {first_buffer_breach_month}")
+    print(f"Savings goal missed months: {savings_goal_missed_months}")
