@@ -17,7 +17,7 @@ def is_event_active(event, month):
     return month <= end_month
 
 
-def calculate_scenario_impact(scenario, month):
+def calculate_scenario_impact(scenario, month, regular_income):
     scenario_expenses = 0
     income_change = 0
 
@@ -35,6 +35,16 @@ def calculate_scenario_impact(scenario, month):
 
         elif event.event_type == "income_change":
             income_change += event.amount
+
+        elif event.event_type == "income_percentage_change":
+            if event.percentage is None:
+                raise ValueError(
+                    f"Event '{event.name}' requires a percentage."
+                )
+
+            income_change += (
+                regular_income * event.percentage / 100
+            )
 
     return scenario_expenses, income_change
 
@@ -56,6 +66,7 @@ def simulate_scenario(
         scenario_expenses, income_change = calculate_scenario_impact(
             scenario,
             month,
+            regular_income
         )
 
         income = regular_income + income_change

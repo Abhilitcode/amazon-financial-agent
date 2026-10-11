@@ -57,10 +57,18 @@ vacation = FinancialEvent(
     start_month=2,
 )
 
+salary_cut = FinancialEvent(
+    name="Salary reduction",
+    event_type="income_percentage_change",
+    percentage=-15,
+    start_month=2,
+    duration_months=2,
+)
+
 
 scenario = FinancialScenario(
-    name="Car + Vacation",
-    events=[car_emi, vacation]
+    name="Car + Vacation + Salary Cut",
+    events=[car_emi, vacation, salary_cut]
 )
 
 
@@ -113,19 +121,19 @@ for result in results:
         f"Buffer {'Safe' if result.buffer_safe else 'Breached'}"
     )
 
-    print("\nSUMMARY")
+print("\nSUMMARY")
 
-    summary = summarize_simulation(
-        results,
-        profile.minimum_buffer,
-    )
+summary = summarize_simulation(
+    results,
+    profile.minimum_buffer,
+)
 
-    lowest_savings = summary[0]
-    buffer_breached = summary[1]
-    first_buffer_breach_month = summary[2]
-    savings_goal_missed_months = summary[3]
+lowest_savings = summary[0]
+buffer_breached = summary[1]
+first_buffer_breach_month = summary[2]
+savings_goal_missed_months = summary[3]
 
-    print(f"Lowest savings: ₹{lowest_savings:,.0f}")
-    print(f"Buffer breached: {buffer_breached}")
-    print(f"First buffer breach month: {first_buffer_breach_month}")
-    print(f"Savings goal missed months: {savings_goal_missed_months}")
+print(f"Lowest savings: ₹{lowest_savings:,.0f}")
+print(f"Buffer breached: {buffer_breached}")
+print(f"First buffer breach month: {first_buffer_breach_month}")
+print(f"Savings goal missed months: {savings_goal_missed_months}")

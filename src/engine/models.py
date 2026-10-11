@@ -18,9 +18,10 @@ class FinancialProfile:
 class FinancialEvent:
     name: str
     event_type: str
-    amount: float
+    amount: float = 0.0 
     start_month: int = 1
     duration_months: int | None = None
+    percentage: float | None = None
 
 
 @dataclass
