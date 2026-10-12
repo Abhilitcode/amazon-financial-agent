@@ -66,9 +66,44 @@ salary_cut = FinancialEvent(
 )
 
 
+rent_increase = FinancialEvent(
+    name="Rent increase",
+    event_type="expense_percentage_change",
+    percentage=10,
+    target_expense="rent",
+    start_month=3,
+    duration_months=3,
+)
+
+grocery_increase = FinancialEvent(
+    name="Grocery price increase",
+    event_type="expense_percentage_change",
+    percentage=15,
+    target_expense="groceries",
+    start_month=2,
+    duration_months=6,
+)
+
+dining_reduction = FinancialEvent(
+    name="Reduce dining expenses",
+    event_type="expense_percentage_change",
+    percentage=-25,
+    target_expense="dining",
+    start_month=1,
+    duration_months=None,
+)
+
+
 scenario = FinancialScenario(
-    name="Car + Vacation + Salary Cut",
-    events=[car_emi, vacation, salary_cut]
+    name="Combined Financial Stress Test",
+    events=[
+        car_emi,
+        vacation,
+        salary_cut,
+        rent_increase,
+        grocery_increase,
+        dining_reduction,
+    ]
 )
 
 
