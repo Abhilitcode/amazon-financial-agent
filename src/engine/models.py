@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-
+from math import isfinite
 
 @dataclass
 class FinancialProfile:
@@ -63,15 +63,100 @@ class FinancialProfile:
         # 5. Add the expense to the selected dictionary
         categories[category][name] = amount
 
+
 @dataclass
 class FinancialEvent:
     name: str
     event_type: str
-    amount: float = 0.0 
+    amount: float = 0.0
     start_month: int = 1
     duration_months: int | None = None
     percentage: float | None = None
     target_expense: str | None = None
+
+    def __post_init__(self):
+        # 1. Validate event name
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise ValueError("Event name cannot be empty.")
+
+        # 2. Validate event type
+        valid_event_types = {
+            "recurring_expense",
+            "one_time_expense",
+            "income_change",
+            "income_percentage_change",
+            "expense_percentage_change",
+        }
+
+        if not isinstance(self.event_type, str):
+            raise ValueError("Event type must be a string.")
+
+        self.event_type = self.event_type.strip().lower()
+
+        if self.event_type not in valid_event_types:
+            raise ValueError(
+                f"Unsupported event type: {self.event_type}"
+            )
+
+        # 3. Validate start month
+        if (
+            isinstance(self.start_month, bool)
+            or not isinstance(self.start_month, int)
+            or self.start_month < 1
+        ):
+            raise ValueError("Start month must be a positive integer.")
+
+        # 4. Validate duration
+        if self.duration_months is not None:
+            if (
+                isinstance(self.duration_months, bool)
+                or not isinstance(self.duration_months, int)
+                or self.duration_months < 1
+            ):
+                raise ValueError(
+                    "Duration must be a positive integer or None."
+                )
+
+        # 5. Validate amount
+        if (
+            isinstance(self.amount, bool)
+            or not isinstance(self.amount, (int, float))
+            or not isfinite(self.amount)
+        ):
+            raise ValueError("Amount must be a finite number.")
+
+        if (
+            self.event_type in {"recurring_expense", "one_time_expense"}
+            and self.amount < 0
+        ):
+            raise ValueError("Expense amount cannot be negative.")
+
+        # 6. Validate percentage for percentage-based events
+        percentage_event_types = {
+            "income_percentage_change",
+            "expense_percentage_change",
+        }
+
+        if self.event_type in percentage_event_types:
+            if (
+                isinstance(self.percentage, bool)
+                or not isinstance(self.percentage, (int, float))
+                or not isfinite(self.percentage)
+            ):
+                raise ValueError(
+                    f"Event '{self.name}' requires a finite percentage."
+                )
+
+        # 7. Expense percentage changes need a target
+        if self.event_type == "expense_percentage_change":
+            if (
+                not isinstance(self.target_expense, str)
+                or not self.target_expense.strip()
+            ):
+                raise ValueError(
+                    f"Event '{self.name}' requires a target expense."
+                )
+
 
 
 @dataclass
