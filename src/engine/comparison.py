@@ -50,3 +50,42 @@ def compare_scenarios(profile, scenario_a, scenario_b, months=24):
         "ending_savings_difference": ending_savings_b - ending_savings_a,
         "monthly_comparison": monthly_comparison,
     }
+
+def compare_multiple_scenarios(profile, scenarios, months=24):
+    scenario_summaries = []
+    all_monthly_results = []
+
+    for scenario in scenarios:
+        results = simulate_scenario(profile, scenario, months)
+
+        summary = summarize_simulation(
+            results, profile.minimum_buffer
+        )
+
+        scenario_summaries.append({
+            "name": scenario.name,
+            "ending_savings": results[-1].ending_savings,
+            "lowest_savings": summary[0],
+            "buffer_breached": summary[1],
+            "first_buffer_breach_month": summary[2],
+            "savings_goal_missed_months": summary[3],
+        })
+
+        all_monthly_results.append(results)
+
+    #COMPARISON LOGIC
+    monthly_comparison = []
+
+    for month_index in range(months):
+        month_data = {"month": month_index + 1}
+
+        for scenario_index, scenario in enumerate(scenarios):
+            result = all_monthly_results[scenario_index][month_index]
+            month_data[scenario.name] = result.ending_savings
+
+        monthly_comparison.append(month_data)
+
+    return {
+        "scenario_summaries": scenario_summaries,
+        "monthly_comparison": monthly_comparison,
+    }
