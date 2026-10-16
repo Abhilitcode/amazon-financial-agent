@@ -3,6 +3,8 @@ from dataclasses import asdict
 
 from mcp.server import MCPServer
 from models import FinancialProfile
+from models import FinancialEvent, FinancialScenario
+from simulation import simulate_scenario
 
 
 mcp = MCPServer("Amazon Financial Agent")
@@ -36,3 +38,35 @@ profile = FinancialProfile(
 def get_profile() -> dict:
     """Return the current financial profile."""
     return asdict(profile)
+
+@mcp.tool()
+def simulate(
+    event_name: str,
+    event_type: str,
+    amount: float = 0,
+    start_month: int = 1,
+    duration_months: int | None = None,
+    percentage: float | None = None,
+    target_expense: str | None = None,
+    months: int = 24,
+) -> list[dict]:
+    """Simulate a financial event and return monthly results."""
+
+    event = FinancialEvent(
+        name=event_name,
+        event_type=event_type,
+        amount=amount,
+        start_month=start_month,
+        duration_months=duration_months,
+        percentage=percentage,
+        target_expense=target_expense,
+    )
+
+    scenario = FinancialScenario(
+        name=event_name,
+        events=[event],
+    )
+
+    results = simulate_scenario(profile, scenario, months)
+
+    return [asdict(result) for result in results]
