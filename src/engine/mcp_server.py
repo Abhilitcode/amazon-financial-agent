@@ -5,6 +5,7 @@ from mcp.server import MCPServer
 from models import FinancialProfile
 from models import FinancialEvent, FinancialScenario
 from simulation import simulate_scenario
+from comparison import compare_multiple_scenarios
 
 
 mcp = MCPServer("Amazon Financial Agent")
@@ -70,3 +71,32 @@ def simulate(
     results = simulate_scenario(profile, scenario, months)
 
     return [asdict(result) for result in results]
+
+
+@mcp.tool()
+def compare(
+    scenarios: list[dict],
+    months: int = 24,
+) -> dict:
+    """Compare multiple financial scenarios and return their results."""
+    scenario_objects = []
+
+    for scenario_data in scenarios:
+        events = []
+
+        for event_data in scenario_data["events"]:
+            event = FinancialEvent(**event_data)
+            events.append(event)
+
+        #final scenario object to append
+        scenario = FinancialScenario(
+            name=scenario_data["name"],
+            events=events,
+        )
+
+        scenario_objects.append(scenario)
+
+    results = compare_multiple_scenarios(profile, scenario_objects, months)
+    
+    return results
+
