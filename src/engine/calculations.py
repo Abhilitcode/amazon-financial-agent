@@ -9,6 +9,8 @@ def calculate_total_fixed_expenses(profile):
 def calculate_total_essential_expenses(profile):
     return sum(profile.essential_expenses.values())
 
+def calculate_total_other_expenses(profile):
+    return sum(profile.other_expenses.values())
 
 def calculate_total_flexible_expenses(profile):
     return sum(profile.flexible_expenses.values())
@@ -19,6 +21,7 @@ def calculate_total_expenses(profile):
         calculate_total_fixed_expenses(profile)
         + calculate_total_essential_expenses(profile)
         + calculate_total_flexible_expenses(profile)
+        + calculate_total_other_expenses(profile)
     )
 
 

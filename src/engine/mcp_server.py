@@ -42,6 +42,55 @@ def get_profile() -> dict:
     return asdict(profile)
 
 @mcp.tool()
+def set_profile(
+    monthly_salary: float,
+    other_income: float,
+    current_savings: float,
+    fixed_expenses: dict[str, float] | None = None,
+    essential_expenses: dict[str, float] | None = None,
+    flexible_expenses: dict[str, float] | None = None,
+    other_expenses: dict[str, float] | None = None,
+    monthly_savings_goal: float = 0,
+    minimum_buffer: float = 0,
+) -> dict:
+    """Replace the current financial profile with a user's own profile."""
+
+    global profile
+
+    profile = FinancialProfile(
+        monthly_salary=monthly_salary,
+        other_income=other_income,
+        current_savings=current_savings,
+        fixed_expenses=fixed_expenses or {},
+        essential_expenses=essential_expenses or {},
+        flexible_expenses=flexible_expenses or {},
+        other_expenses=other_expenses or {},
+        monthly_savings_goal=monthly_savings_goal,
+        minimum_buffer=minimum_buffer,
+    )
+
+    return asdict(profile)
+
+
+@mcp.tool()
+def add_expense(
+    name: str,
+    amount: float,
+    category: str,
+) -> dict:
+    """Add an expense to the current financial profile."""
+
+    profile.add_expense(
+        name=name,
+        amount=amount,
+        category=category,
+    )
+
+    return asdict(profile)
+
+
+
+@mcp.tool()
 def simulate(
     event_name: str,
     event_type: str,

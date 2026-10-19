@@ -22,6 +22,7 @@ def get_expense_amount(profile, target_expense):
         profile.fixed_expenses,
         profile.essential_expenses,
         profile.flexible_expenses,
+        profile.other_expenses,
     ]
 
     matching_amounts = [

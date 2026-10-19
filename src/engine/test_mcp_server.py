@@ -25,6 +25,49 @@ async def main():
             if isinstance(item, types.TextContent):
                 print(item.text)
 
+        # 1B. Test set_profile
+        print("\nTesting set_profile tool")
+
+        set_profile_result = await client.call_tool(
+            "set_profile",
+            arguments={
+                "monthly_salary": 50000,
+                "other_income": 0,
+                "current_savings": 100000,
+                "fixed_expenses": {"rent": 15000},
+                "essential_expenses": {"groceries": 5000},
+                "flexible_expenses": {"dining": 2000},
+                "monthly_savings_goal": 10000,
+                "minimum_buffer": 20000,
+            },
+        )
+
+        print("Did tool calling fail?:", set_profile_result.is_error)
+
+        for item in set_profile_result.content:
+            if isinstance(item, types.TextContent):
+                print(item.text)
+
+        
+        # 1C. Test add_expense
+        print("\nTesting add_expense tool")
+
+        add_expense_result = await client.call_tool(
+            "add_expense",
+            arguments={
+                "name": "medicines",
+                "amount": 1500,
+                "category": "healthcare",
+            },
+        )
+
+        print("Did tool calling fail?:", add_expense_result.is_error)
+
+        for item in add_expense_result.content:
+            if isinstance(item, types.TextContent):
+                print(item.text)
+
+
         # 2. Test simulate
         simulation_result = await client.call_tool(
             "simulate",

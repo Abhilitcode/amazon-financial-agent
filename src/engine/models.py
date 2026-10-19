@@ -10,6 +10,7 @@ class FinancialProfile:
     fixed_expenses: dict[str, float] = field(default_factory=dict)
     essential_expenses: dict[str, float] = field(default_factory=dict)
     flexible_expenses: dict[str, float] = field(default_factory=dict)
+    other_expenses: dict[str, float] = field(default_factory=dict)
 
     monthly_savings_goal: float = 0.0
     minimum_buffer: float = 0.0
@@ -35,6 +36,7 @@ class FinancialProfile:
             raise ValueError("Expense amount must be finite and non-negative.")
 
         # 3. Select the correct expense category
+        
         categories = {
             "fixed": self.fixed_expenses,
             "essential": self.essential_expenses,
@@ -43,16 +45,17 @@ class FinancialProfile:
 
         category = category.strip().lower()
 
+        # Unknown categories go into other_expenses
         if category not in categories:
-            raise ValueError(
-                "Category must be fixed, essential, or flexible."
-            )
+            categories[category] = self.other_expenses
+
 
         # 4. Prevent duplicate names across all categories
         existing_names = (
             list(self.fixed_expenses)
             + list(self.essential_expenses)
             + list(self.flexible_expenses)
+            + list(self.other_expenses)
         )
 
         if any(existing.casefold() == name.casefold() for existing in existing_names):
