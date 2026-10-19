@@ -93,6 +93,24 @@ async def main():
             if isinstance(item, types.TextContent):
                 print(item.text)
 
+        
+        # 4. Test find_limit
+        print("\nTesting find_limit tool")
+
+        limit_result = await client.call_tool(
+            "find_limit",
+            arguments={
+                "months": 24,
+                "events": [],
+            },
+        )
+
+        print("Did tool calling fail?:", limit_result.is_error)
+
+        for item in limit_result.content:
+            if isinstance(item, types.TextContent):
+                print(item.text)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

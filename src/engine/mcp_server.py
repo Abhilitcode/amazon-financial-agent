@@ -6,6 +6,7 @@ from models import FinancialProfile
 from models import FinancialEvent, FinancialScenario
 from simulation import simulate_scenario
 from comparison import compare_multiple_scenarios
+from find_limit import find_max_affordable_commitment
 
 
 mcp = MCPServer("Amazon Financial Agent")
@@ -99,4 +100,43 @@ def compare(
     results = compare_multiple_scenarios(profile, scenario_objects, months)
     
     return results
+
+@mcp.tool()
+def find_limit(
+    months: int = 24,
+    events: list[dict] | None = None,
+) -> dict:
+    """Find the maximum safe additional monthly commitment."""
+
+    event_objects = [
+        FinancialEvent(**event_data)
+        for event_data in (events or [])
+    ]
+
+    base_scenario = FinancialScenario(
+        name="Existing financial commitments",
+        events=event_objects,
+    )
+
+    amount = find_max_affordable_commitment(
+        profile,
+        base_scenario,
+        months,
+    )
+
+    if amount is None:
+        return {
+            "status": "unsafe",
+            "message": (
+                "Your existing financial plan breaches the minimum "
+                "savings buffer even without an additional commitment."
+            ),
+            "maximum_commitment": None,
+        }
+
+    return {
+        "status": "safe",
+        "maximum_commitment": amount,
+        "months": months,
+    }
 
