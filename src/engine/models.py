@@ -161,11 +161,73 @@ class FinancialEvent:
                 )
 
 
-
 @dataclass
 class FinancialScenario:
     name: str
     events: list[FinancialEvent] = field(default_factory=list)
+
+    def add_event(self, event: FinancialEvent) -> None:
+        # 1. Check that the event has the correct type
+        if not isinstance(event, FinancialEvent):
+            raise ValueError("Event must be a FinancialEvent object.")
+
+        # 2. Prevent duplicate event names
+        for existing_event in self.events:
+            if existing_event.name.casefold() == event.name.casefold():
+                raise ValueError(
+                    f"Event '{event.name}' already exists in this scenario."
+                )
+
+        # 3. Add the event to the scenario
+        self.events.append(event)
+
+    
+    def update_event(
+        self,
+        event_name: str,
+        updated_event: FinancialEvent,
+    ) -> None:
+        # 1. Validate the updated event
+        if not isinstance(updated_event, FinancialEvent):
+            raise ValueError("Updated event must be a FinancialEvent object.")
+
+        # 2. Find the event that should be updated
+        for index, existing_event in enumerate(self.events):
+            if existing_event.name.casefold() == event_name.casefold():
+
+                # 3. Prevent conflicts with another event's name
+                for other_index, other_event in enumerate(self.events):
+                    if (
+                        other_index != index
+                        and other_event.name.casefold()
+                        == updated_event.name.casefold()
+                    ):
+                        raise ValueError(
+                            f"Event '{updated_event.name}' already exists."
+                        )
+
+                # 4. Replace the old event with the updated event
+                self.events[index] = updated_event
+                
+                #return is used inside a function to 
+                #send a value back to the caller and immediately exit the function
+                return
+
+        # 5. Handle an event name that doesn't exist
+        raise ValueError(f"Event '{event_name}' was not found.")
+
+    def remove_event(self, event_name: str) -> FinancialEvent:
+        # 1. Find the event to remove
+        for index, existing_event in enumerate(self.events):
+            if existing_event.name.casefold() == event_name.casefold():
+
+                # 2. Remove and return the event
+                return self.events.pop(index)
+
+        # 3. Handle an event name that doesn't exist
+        raise ValueError(f"Event '{event_name}' was not found.")
+
+
 
 @dataclass
 class MonthlyResult:

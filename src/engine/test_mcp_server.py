@@ -68,6 +68,45 @@ async def main():
                 print(item.text)
 
 
+        
+        # 1D. Test cumulative scenario management
+        print("\nTesting cumulative scenario management")
+
+        car_result = await client.call_tool(
+            "add_event",
+            arguments={
+                "event_name": "Car EMI",
+                "event_type": "recurring_expense",
+                "amount": 20000,
+                "start_month": 1,
+                "duration_months": 3,
+            },
+        )
+        print("Add car failed?:", car_result.is_error)
+
+        vacation_result = await client.call_tool(
+            "add_event",
+            arguments={
+                "event_name": "Vacation",
+                "event_type": "one_time_expense",
+                "amount": 60000,
+                "start_month": 2,
+            },
+        )
+        print("Add vacation failed?:", vacation_result.is_error)
+
+        plan_result = await client.call_tool(
+            "simulate_current_scenario",
+            arguments={"months": 3},
+        )
+        print("Combined simulation failed?:", plan_result.is_error)
+
+        for item in plan_result.content:
+            if isinstance(item, types.TextContent):
+                print(item.text)
+
+
+
         # 2. Test simulate
         simulation_result = await client.call_tool(
             "simulate",

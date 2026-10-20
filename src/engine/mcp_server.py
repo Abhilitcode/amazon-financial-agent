@@ -71,6 +71,11 @@ def set_profile(
 
     return asdict(profile)
 
+# Create the scenario once when the server starts
+current_scenario = FinancialScenario(
+    name="My Financial Plan",
+)
+
 
 @mcp.tool()
 def add_expense(
@@ -87,6 +92,85 @@ def add_expense(
     )
 
     return asdict(profile)
+
+@mcp.tool()
+def add_event(
+    event_name: str,
+    event_type: str,
+    amount: float = 0,
+    start_month: int = 1,
+    duration_months: int | None = None,
+    percentage: float | None = None,
+    target_expense: str | None = None,
+) -> dict:
+    """Add a financial event to the current scenario."""
+
+    event = FinancialEvent(
+        name=event_name,
+        event_type=event_type,
+        amount=amount,
+        start_month=start_month,
+        duration_months=duration_months,
+        percentage=percentage,
+        target_expense=target_expense,
+    )
+
+    current_scenario.add_event(event)
+
+    return asdict(current_scenario)
+
+
+@mcp.tool()
+def update_event(
+    event_name: str,
+    updated_event_name: str,
+    event_type: str,
+    amount: float = 0,
+    start_month: int = 1,
+    duration_months: int | None = None,
+    percentage: float | None = None,
+    target_expense: str | None = None,
+) -> dict:
+    """Update an existing event in the current scenario."""
+
+    updated_event = FinancialEvent(
+        name=updated_event_name,
+        event_type=event_type,
+        amount=amount,
+        start_month=start_month,
+        duration_months=duration_months,
+        percentage=percentage,
+        target_expense=target_expense,
+    )
+
+    current_scenario.update_event(event_name, updated_event)
+
+    return asdict(current_scenario)
+
+
+@mcp.tool()
+def remove_event(event_name: str) -> dict:
+    """Remove an event from the current scenario."""
+
+    removed_event = current_scenario.remove_event(event_name)
+
+    return {
+        "message": f"Removed event '{removed_event.name}'.",
+        "scenario": asdict(current_scenario),
+    }
+
+
+@mcp.tool()
+def simulate_current_scenario(months: int = 24) -> list[dict]:
+    """Simulate all events in the current financial plan."""
+
+    results = simulate_scenario(
+        profile,
+        current_scenario,
+        months,
+    )
+
+    return [asdict(result) for result in results]
 
 
 
