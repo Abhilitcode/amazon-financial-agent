@@ -37,15 +37,14 @@ amazon-financial-agent/
         └── summary.py
 ```
 
+
 ## Setup and Run Locally
 
 1. Clone the repository:
 
    ```bash
-
-git clone https://github.com/Abhilitcode/amazon-financial-agent.git
-cd amazon-financial-agent
-
+   git clone https://github.com/Abhilitcode/amazon-financial-agent.git
+   cd amazon-financial-agent
    ```
 
 2. Create and activate a Python environment.
@@ -56,13 +55,7 @@ cd amazon-financial-agent
    pip install -r requirements.txt
    ```
 
-4. Configure your OpenAI API key using a local `.env` file or Streamlit Secrets. Never commit API keys or other secrets to GitHub.
-
-   Example `.env` entry:
-
-   ```text
-   OPENAI_API_KEY=your_api_key_here
-   ```
+4. Configure your OpenAI API key using a local `.env` file or Streamlit Secrets. Never commit API keys to GitHub.
 
 5. Start the application:
 
