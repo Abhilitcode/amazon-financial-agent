@@ -7,10 +7,16 @@ from models import FinancialEvent, FinancialScenario
 from simulation import simulate_scenario
 from comparison import compare_multiple_scenarios
 from find_limit import find_max_affordable_commitment
-
+from typing import Literal
 
 mcp = MCPServer("Amazon Financial Agent")
-
+EventType = Literal[
+    "recurring_expense",
+    "one_time_expense",
+    "income_change",
+    "income_percentage_change",
+    "expense_percentage_change",
+]
 
 profile = FinancialProfile(
     monthly_salary=80000,
@@ -78,25 +84,45 @@ current_scenario = FinancialScenario(
 
 
 @mcp.tool()
-def add_expense(
-    name: str,
-    amount: float,
-    category: str,
-) -> dict:
-    """Add an expense to the current financial profile."""
+def add_expense(name: str, amount: float, category: str) -> dict:
+    """Add a monthly expense to the requested expense category."""
+    if amount < 0:
+        raise ValueError("Expense amount cannot be negative.")
 
-    profile.add_expense(
-        name=name,
-        amount=amount,
-        category=category,
-    )
+    category_key = category.strip().lower().replace(" ", "_").replace("-", "_")
+
+    category_map = {
+        "fixed": "fixed_expenses",
+        "fixed_expense": "fixed_expenses",
+        "fixed_expenses": "fixed_expenses",
+        "essential": "essential_expenses",
+        "essential_expense": "essential_expenses",
+        "essential_expenses": "essential_expenses",
+        "flexible": "flexible_expenses",
+        "flexible_expense": "flexible_expenses",
+        "flexible_expenses": "flexible_expenses",
+        "other": "other_expenses",
+        "other_expense": "other_expenses",
+        "other_expenses": "other_expenses",
+    }
+
+    field_name = category_map.get(category_key)
+
+    if field_name is None:
+        raise ValueError(
+            "Invalid category. Use fixed_expenses, "
+            "essential_expenses, flexible_expenses, or other_expenses."
+        )
+
+    expenses = getattr(profile, field_name)
+    expenses[name] = amount
 
     return asdict(profile)
 
 @mcp.tool()
 def add_event(
     event_name: str,
-    event_type: str,
+    event_type: EventType,
     amount: float = 0,
     start_month: int = 1,
     duration_months: int | None = None,
@@ -124,7 +150,7 @@ def add_event(
 def update_event(
     event_name: str,
     updated_event_name: str,
-    event_type: str,
+    event_type: EventType,
     amount: float = 0,
     start_month: int = 1,
     duration_months: int | None = None,
@@ -173,11 +199,10 @@ def simulate_current_scenario(months: int = 24) -> list[dict]:
     return [asdict(result) for result in results]
 
 
-
 @mcp.tool()
 def simulate(
     event_name: str,
-    event_type: str,
+    event_type: EventType,
     amount: float = 0,
     start_month: int = 1,
     duration_months: int | None = None,
@@ -185,9 +210,16 @@ def simulate(
     target_expense: str | None = None,
     months: int = 24,
 ) -> list[dict]:
-    """Simulate a financial event and return monthly results."""
+    """Simulate a hypothetical event on top of the saved plan."""
 
-    event = FinancialEvent(
+    # Copy existing saved events; do not modify the original plan.
+    events = [
+        FinancialEvent(**asdict(event))
+        for event in current_scenario.events
+    ]
+
+    # Add the hypothetical event to the copy.
+    hypothetical_event = FinancialEvent(
         name=event_name,
         event_type=event_type,
         amount=amount,
@@ -197,9 +229,11 @@ def simulate(
         target_expense=target_expense,
     )
 
+    events.append(hypothetical_event)
+
     scenario = FinancialScenario(
-        name=event_name,
-        events=[event],
+        name="Hypothetical: " + event_name,
+        events=events,
     )
 
     results = simulate_scenario(profile, scenario, months)
@@ -207,48 +241,87 @@ def simulate(
     return [asdict(result) for result in results]
 
 
+
 @mcp.tool()
 def compare(
     scenarios: list[dict],
     months: int = 24,
 ) -> dict:
-    """Compare multiple financial scenarios and return their results."""
+    """Compare scenarios, optionally based on the current saved plan."""
     scenario_objects = []
 
     for scenario_data in scenarios:
-        events = []
+        # Copy saved events only; never modify the original plan.
+        include_current_plan = scenario_data.get(
+            "include_current_plan", True
+        )
 
-        for event_data in scenario_data["events"]:
-            event = FinancialEvent(**event_data)
-            events.append(event)
+        events = (
+            [
+                FinancialEvent(**asdict(event))
+                for event in current_scenario.events
+            ]
+            if include_current_plan
+            else []
+        )
 
-        #final scenario object to append
+        # Add hypothetical events to this scenario's copy.
+        for event_data in scenario_data.get("events", []):
+            event_data = dict(event_data)
+
+            if "event_name" in event_data and "name" not in event_data:
+                event_data["name"] = event_data.pop("event_name")
+            else:
+                event_data.pop("event_name", None)
+
+            events.append(FinancialEvent(**event_data))
+
         scenario = FinancialScenario(
-            name=scenario_data["name"],
+            name=scenario_data.get("name", "Unnamed Scenario"),
             events=events,
         )
 
         scenario_objects.append(scenario)
 
-    results = compare_multiple_scenarios(profile, scenario_objects, months)
-    
-    return results
+    return compare_multiple_scenarios(
+        profile,
+        scenario_objects,
+        months,
+    )
+
 
 @mcp.tool()
 def find_limit(
     months: int = 24,
     events: list[dict] | None = None,
 ) -> dict:
-    """Find the maximum safe additional monthly commitment."""
+    """Find the largest additional monthly commitment that maintains
+    the minimum savings buffer and meets the monthly savings goal."""
 
-    event_objects = [
-        FinancialEvent(**event_data)
-        for event_data in (events or [])
+    event_objects = []
+
+    for event_data in (events or []):
+        event_data = dict(event_data)
+
+        # Accept either "name" or "event_name" from the AI
+        if "event_name" in event_data and "name" not in event_data:
+            event_data["name"] = event_data.pop("event_name")
+        else:
+            event_data.pop("event_name", None)
+
+        event = FinancialEvent(**event_data)
+        event_objects.append(event)
+
+    # Copy the saved plan's events without modifying the original.
+    saved_events = [
+        FinancialEvent(**asdict(event))
+        for event in current_scenario.events
     ]
 
+    # Include any additional hypothetical events supplied to the tool.
     base_scenario = FinancialScenario(
         name="Existing financial commitments",
-        events=event_objects,
+        events=saved_events + event_objects,
     )
 
     amount = find_max_affordable_commitment(
