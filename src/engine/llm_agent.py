@@ -17,7 +17,14 @@ load_dotenv(PROJECT_ROOT / ".env")
 api_key = os.getenv("OPENAI_API_KEY")
 
 if not api_key:
-    raise ValueError("OPENAI_API_KEY was not found in .env")
+    try:
+        import streamlit as st
+        api_key = st.secrets["OPENAI_API_KEY"]
+    except (ImportError, KeyError, FileNotFoundError):
+        pass
+
+if not api_key:
+    raise ValueError("OPENAI_API_KEY was not found in environment variables or Streamlit Secrets")
 
 openai_client = OpenAI(api_key=api_key)
 
