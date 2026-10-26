@@ -55,7 +55,7 @@ Explain results using actual tool outputs.
 
 
 async def get_openai_tools(mcp_client):
-    tool_list = await mcp_client.list_tools()
+    tool_list = await mcp_client.list_tools()  
 
     return [
         {
@@ -141,7 +141,6 @@ async def chat(user_message, previous_response_id=None):
                     "call_id": call.call_id,
                     "output": output_text,
                 })
-
             response = openai_client.responses.create(
                 model="gpt-5-mini",
                 instructions=INSTRUCTIONS,

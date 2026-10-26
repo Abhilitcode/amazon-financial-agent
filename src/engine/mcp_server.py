@@ -9,6 +9,13 @@ from comparison import compare_multiple_scenarios
 from find_limit import find_max_affordable_commitment
 from typing import Literal
 
+from typing import TypedDict
+
+
+class ScenarioInput(TypedDict):
+    name: str
+    events: list[dict]
+
 mcp = MCPServer("Amazon Financial Agent")
 EventType = Literal[
     "recurring_expense",
@@ -244,7 +251,7 @@ def simulate(
 
 @mcp.tool()
 def compare(
-    scenarios: list[dict],
+    scenarios: list[ScenarioInput],
     months: int = 24,
 ) -> dict:
     """Compare scenarios, optionally based on the current saved plan."""
@@ -277,8 +284,11 @@ def compare(
             events.append(FinancialEvent(**event_data))
 
         scenario = FinancialScenario(
-            name=scenario_data.get("name", "Unnamed Scenario"),
-            events=events,
+            name=scenario_data.get(
+                "name",
+                scenario_data.get("scenario_name", "Unnamed Scenario"),
+            ),
+            events= events,
         )
 
         scenario_objects.append(scenario)
