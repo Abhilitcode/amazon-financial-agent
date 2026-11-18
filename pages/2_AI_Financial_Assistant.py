@@ -8,8 +8,11 @@ from pathlib import Path
 ENGINE_PATH = Path(__file__).resolve().parent.parent / "src" / "engine"
 sys.path.insert(0, str(ENGINE_PATH))
 
-# Import the existing AI agent.
-from llm_agent import chat
+# Import the existing financial agent and OpenAI client.
+from llm_agent import chat, openai_client
+
+# Import our new speech function.
+from speech import transcribe_audio
 
 
 # -------------------------------
@@ -48,8 +51,7 @@ with st.sidebar:
     )
 
     st.divider()
-    
-    #starts a fresh conversation rather than continuing the old one.
+
     if st.button("Clear Chat", width="stretch"):
         st.session_state.chat_messages = []
         st.session_state.previous_response_id = None
@@ -67,10 +69,71 @@ for message in st.session_state.chat_messages:
 
 
 # -------------------------------
-# 5. Accept a new message
+# 5. Accept text or voice input
 # -------------------------------
 
-user_message = st.chat_input("Ask something about your finances...")
+prompt = st.chat_input(
+    "Type a message or record a voice message...",
+    accept_audio=True,
+    audio_sample_rate=16000,
+    key="financial_chat_input",
+    submit_mode="disable",
+)
+
+user_message = None
+
+MAX_AUDIO_SIZE = 5 * 1024 * 1024  # 5 MB
+
+
+if prompt is not None:
+
+    # Do not process text and audio together in this first version.
+    if prompt.audio is not None and (prompt.text or "").strip():
+
+        st.warning(
+            "Please send either a typed message or a voice recording."
+        )
+
+    # Process a voice recording.
+    elif prompt.audio is not None:
+
+        if prompt.audio.size > MAX_AUDIO_SIZE:
+
+            st.error(
+                "Recording is too large. Please record a shorter message."
+            )
+
+        else:
+
+            try:
+                with st.spinner("Transcribing your voice..."):
+
+                    user_message = transcribe_audio(
+                        prompt.audio,
+                        openai_client,
+                    )
+
+                if user_message:
+                    st.success("Voice successfully transcribed!")
+
+                else:
+                    st.warning("No speech was detected.")
+
+            except Exception as exc:
+
+                st.error(
+                    f"Voice transcription failed: "
+                    f"{type(exc).__name__}: {exc}"
+                )
+
+    # Process an ordinary typed message.
+    else:
+        user_message = (prompt.text or "").strip()
+
+
+# -------------------------------
+# 6. Send the message to the agent
+# -------------------------------
 
 if user_message:
 
@@ -89,6 +152,7 @@ if user_message:
         with st.spinner("Analysing your financial information..."):
 
             try:
+
                 answer, response_id = asyncio.run(
                     chat(
                         user_message,
@@ -96,7 +160,7 @@ if user_message:
                     )
                 )
 
-                # Preserve the conversation ID for the next message.
+                # Preserve the conversation ID.
                 st.session_state.previous_response_id = response_id
 
                 st.markdown(answer)
@@ -108,4 +172,8 @@ if user_message:
                 })
 
             except Exception as exc:
-                st.error(f"Something went wrong: {exc}")
+
+                st.error(
+                    f"Something went wrong: "
+                    f"{type(exc).__name__}: {exc}"
+                )
