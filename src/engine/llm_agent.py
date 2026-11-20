@@ -2,6 +2,12 @@
 import os
 import asyncio
 import json
+import logging 
+import time
+
+#UUID stands for Universally Unique Identifier.
+#It generates a unique identifier that we can assign to each user request.
+import uuid
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -9,6 +15,12 @@ from openai import OpenAI
 from mcp import Client
 from mcp_server import mcp
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
+
+logger = logging.getLogger("financial_agent")
 
 # Load environment variables from the project root
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -118,6 +130,12 @@ async def get_openai_tools(mcp_client):
 async def chat(user_message, previous_response_id=None):
     """Process one user message and return (answer, response_id)."""
 
+    request_id = uuid.uuid4().hex
+    logger.info("REQUEST START | request_id=%s", request_id)
+
+    # tool duration tells us how fast an individual tool is.
+    request_start_time = time.perf_counter()
+
     async with Client(mcp) as mcp_client:
         tools = await get_openai_tools(mcp_client)
 
@@ -145,6 +163,17 @@ async def chat(user_message, previous_response_id=None):
             ]
 
             if not function_calls:
+                #Request duration tells us how fast the entire AI agent handles a user's question.
+                request_duration = (
+                    time.perf_counter() - request_start_time
+                ) * 1000
+
+                logger.info(
+                    "REQUEST COMPLETE | request_id=%s | duration_ms=%.2f | outcome=success",
+                    request_id,
+                    request_duration,
+                )
+
                 return (
                     response.output_text
                     or "I couldn't produce a final text response.",
@@ -154,6 +183,9 @@ async def chat(user_message, previous_response_id=None):
             tool_outputs = []
 
             for call in function_calls:
+
+                tool_start_time = time.perf_counter()
+
                 try:
                     arguments = json.loads(call.arguments)
 
@@ -162,6 +194,10 @@ async def chat(user_message, previous_response_id=None):
                         arguments=arguments,
                     )
 
+                    execution_time = (
+                        time.perf_counter() - tool_start_time
+                    ) * 1000
+
                     output_text = "\n".join(
                         item.text
                         for item in (result.content or [])
@@ -169,16 +205,43 @@ async def chat(user_message, previous_response_id=None):
                     )
 
                     if result.is_error:
+                        logger.error(
+                            "MCP TOOL FAILED | request_id=%s | tool=%s | duration_ms=%.2f",
+                            request_id,
+                            call.name,
+                            execution_time,
+                        )
+
                         output_text = (
                             "Tool execution failed: " + output_text
                         )
 
-                    elif not output_text:
-                        output_text = str(
-                            getattr(result, "structuredContent", {})
+                    else:
+                        logger.info(
+                            "MCP TOOL SUCCESS | request_id=%s | tool=%s | duration_ms=%.2f",
+                            request_id,
+                            call.name,
+                            execution_time,
                         )
 
+                        if not output_text:
+                            output_text = str(
+                                getattr(result, "structuredContent", {})
+                            )
+
                 except Exception as exc:
+
+                    execution_time = (
+                        time.perf_counter() - tool_start_time
+                    ) * 1000
+
+                    logger.exception(
+                        "MCP TOOL EXCEPTION | request_id=%s | tool=%s | duration_ms=%.2f",
+                        request_id,
+                        call.name,
+                        execution_time,
+                    )
+
                     output_text = (
                         f"Tool call failed: {type(exc).__name__}: {exc}"
                     )
@@ -195,6 +258,16 @@ async def chat(user_message, previous_response_id=None):
                 input=tool_outputs,
                 tools=tools,
             )
+        request_duration = (
+            time.perf_counter() - request_start_time
+        ) * 1000
+
+        logger.warning(
+            "REQUEST COMPLETE | request_id=%s | duration_ms=%.2f | outcome=tool_call_limit",
+            request_id,
+            request_duration,
+        )
+
 
         return (
             "The agent reached its tool-call limit. "
