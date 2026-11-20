@@ -131,148 +131,153 @@ async def chat(user_message, previous_response_id=None):
     """Process one user message and return (answer, response_id)."""
 
     request_id = uuid.uuid4().hex
-    logger.info("REQUEST START | request_id=%s", request_id)
-
-    # tool duration tells us how fast an individual tool is.
     request_start_time = time.perf_counter()
+    request_outcome = "exception"
 
-    async with Client(mcp) as mcp_client:
-        tools = await get_openai_tools(mcp_client)
+    logger.info(
+        "REQUEST START | request_id=%s",
+        request_id,
+    )
 
-        if previous_response_id is None:
-            response = openai_client.responses.create(
-                model="gpt-5-mini",
-                instructions=INSTRUCTIONS,
-                input=user_message,
-                tools=tools,
-            )
-        else:
-            response = openai_client.responses.create(
-                model="gpt-5-mini",
-                instructions=INSTRUCTIONS,
-                previous_response_id=previous_response_id,
-                input=user_message,
-                tools=tools,
-            )
+    try:
+        async with Client(mcp) as mcp_client:
+            tools = await get_openai_tools(mcp_client)
 
-        # Allow up to five rounds of tool calls.
-        for _ in range(5):
-            function_calls = [
-                item for item in response.output
-                if item.type == "function_call"
-            ]
-
-            if not function_calls:
-                #Request duration tells us how fast the entire AI agent handles a user's question.
-                request_duration = (
-                    time.perf_counter() - request_start_time
-                ) * 1000
-
-                logger.info(
-                    "REQUEST COMPLETE | request_id=%s | duration_ms=%.2f | outcome=success",
-                    request_id,
-                    request_duration,
+            if previous_response_id is None:
+                response = openai_client.responses.create(
+                    model="gpt-5-mini",
+                    instructions=INSTRUCTIONS,
+                    input=user_message,
+                    tools=tools,
+                )
+            else:
+                response = openai_client.responses.create(
+                    model="gpt-5-mini",
+                    instructions=INSTRUCTIONS,
+                    previous_response_id=previous_response_id,
+                    input=user_message,
+                    tools=tools,
                 )
 
-                return (
-                    response.output_text
-                    or "I couldn't produce a final text response.",
-                    response.id,
-                )
+            # Allow up to five rounds of tool calls.
+            for _ in range(5):
+                function_calls = [
+                    item for item in response.output
+                    if item.type == "function_call"
+                ]
 
-            tool_outputs = []
+                if not function_calls:
+                    request_outcome = "completed"
 
-            for call in function_calls:
-
-                tool_start_time = time.perf_counter()
-
-                try:
-                    arguments = json.loads(call.arguments)
-
-                    result = await mcp_client.call_tool(
-                        call.name,
-                        arguments=arguments,
+                    return (
+                        response.output_text
+                        or "I couldn't produce a final text response.",
+                        response.id,
                     )
 
-                    execution_time = (
-                        time.perf_counter() - tool_start_time
-                    ) * 1000
+                tool_outputs = []
 
-                    output_text = "\n".join(
-                        item.text
-                        for item in (result.content or [])
-                        if hasattr(item, "text")
-                    )
+                for call in function_calls:
+                    tool_start_time = time.perf_counter()
 
-                    if result.is_error:
-                        logger.error(
-                            "MCP TOOL FAILED | request_id=%s | tool=%s | duration_ms=%.2f",
+                    try:
+                        arguments = json.loads(call.arguments)
+
+                        result = await mcp_client.call_tool(
+                            call.name,
+                            arguments=arguments,
+                        )
+
+                        execution_time = (
+                            time.perf_counter() - tool_start_time
+                        ) * 1000
+
+                        output_text = "\n".join(
+                            item.text
+                            for item in (result.content or [])
+                            if hasattr(item, "text")
+                        )
+
+                        if result.is_error:
+                            logger.error(
+                                "MCP TOOL FAILED | request_id=%s | tool=%s | duration_ms=%.2f",
+                                request_id,
+                                call.name,
+                                execution_time,
+                            )
+
+                            output_text = (
+                                "Tool execution failed: " + output_text
+                            )
+
+                        else:
+                            logger.info(
+                                "MCP TOOL SUCCESS | request_id=%s | tool=%s | duration_ms=%.2f",
+                                request_id,
+                                call.name,
+                                execution_time,
+                            )
+
+                            if not output_text:
+                                output_text = str(
+                                    getattr(result, "structuredContent", {})
+                                )
+
+                    except Exception as exc:
+                        execution_time = (
+                            time.perf_counter() - tool_start_time
+                        ) * 1000
+
+                        logger.exception(
+                            "MCP TOOL EXCEPTION | request_id=%s | tool=%s | duration_ms=%.2f",
                             request_id,
                             call.name,
                             execution_time,
                         )
 
                         output_text = (
-                            "Tool execution failed: " + output_text
+                            f"Tool call failed: {type(exc).__name__}: {exc}"
                         )
 
-                    else:
-                        logger.info(
-                            "MCP TOOL SUCCESS | request_id=%s | tool=%s | duration_ms=%.2f",
-                            request_id,
-                            call.name,
-                            execution_time,
-                        )
+                    tool_outputs.append({
+                        "type": "function_call_output",
+                        "call_id": call.call_id,
+                        "output": output_text,
+                    })
 
-                        if not output_text:
-                            output_text = str(
-                                getattr(result, "structuredContent", {})
-                            )
+                response = openai_client.responses.create(
+                    model="gpt-5-mini",
+                    instructions=INSTRUCTIONS,
+                    previous_response_id=response.id,
+                    input=tool_outputs,
+                    tools=tools,
+                )
 
-                except Exception as exc:
+            request_outcome = "tool_call_limit"
 
-                    execution_time = (
-                        time.perf_counter() - tool_start_time
-                    ) * 1000
-
-                    logger.exception(
-                        "MCP TOOL EXCEPTION | request_id=%s | tool=%s | duration_ms=%.2f",
-                        request_id,
-                        call.name,
-                        execution_time,
-                    )
-
-                    output_text = (
-                        f"Tool call failed: {type(exc).__name__}: {exc}"
-                    )
-
-                tool_outputs.append({
-                    "type": "function_call_output",
-                    "call_id": call.call_id,
-                    "output": output_text,
-                })
-            response = openai_client.responses.create(
-                model="gpt-5-mini",
-                instructions=INSTRUCTIONS,
-                previous_response_id=response.id,
-                input=tool_outputs,
-                tools=tools,
+            return (
+                "The agent reached its tool-call limit. "
+                "Please try a simpler request.",
+                None,
             )
+
+    except Exception:
+        logger.exception(
+            "REQUEST ERROR | request_id=%s",
+            request_id,
+        )
+        raise
+
+    finally:
         request_duration = (
             time.perf_counter() - request_start_time
         ) * 1000
 
-        logger.warning(
-            "REQUEST COMPLETE | request_id=%s | duration_ms=%.2f | outcome=tool_call_limit",
+        logger.info(
+            "REQUEST COMPLETE | request_id=%s | duration_ms=%.2f | outcome=%s",
             request_id,
             request_duration,
-        )
-
-
-        return (
-            "The agent reached its tool-call limit. "
-            "Please try a simpler request.",
-            None,
+            request_outcome,
         )
 
 
