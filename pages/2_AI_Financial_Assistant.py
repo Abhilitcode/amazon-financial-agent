@@ -113,10 +113,7 @@ if prompt is not None:
                         openai_client,
                     )
 
-                if user_message:
-                    st.success("Voice successfully transcribed!")
-
-                else:
+                if not user_message:
                     st.warning("No speech was detected.")
 
             except Exception as exc:

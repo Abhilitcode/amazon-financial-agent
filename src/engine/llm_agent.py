@@ -144,14 +144,18 @@ async def chat(user_message, previous_response_id=None):
             tools = await get_openai_tools(mcp_client)
 
             if previous_response_id is None:
-                response = openai_client.responses.create(
+                response = create_openai_response(
+                    openai_client,
+                    request_id,
                     model="gpt-5-mini",
                     instructions=INSTRUCTIONS,
                     input=user_message,
                     tools=tools,
                 )
             else:
-                response = openai_client.responses.create(
+                response = create_openai_response(
+                    openai_client,
+                    request_id,
                     model="gpt-5-mini",
                     instructions=INSTRUCTIONS,
                     previous_response_id=previous_response_id,
@@ -245,7 +249,9 @@ async def chat(user_message, previous_response_id=None):
                         "output": output_text,
                     })
 
-                response = openai_client.responses.create(
+                response = create_openai_response(
+                    openai_client,
+                    request_id,
                     model="gpt-5-mini",
                     instructions=INSTRUCTIONS,
                     previous_response_id=response.id,
@@ -280,6 +286,27 @@ async def chat(user_message, previous_response_id=None):
             request_outcome,
         )
 
+#helper fuction to keep track of measures of openai api call timer and usage
+def create_openai_response(openai_client, request_id, **kwargs):
+    start_time = time.perf_counter()
+
+    response = openai_client.responses.create(**kwargs)
+
+    duration_ms = (time.perf_counter() - start_time) * 1000
+
+    usage = response.usage
+
+    logger.info(
+        "OPENAI RESPONSE SUCCESS | "
+        "request_id=%s | duration_ms=%.2f | "
+        "input_tokens=%s | output_tokens=%s",
+        request_id,
+        duration_ms,
+        getattr(usage, "input_tokens", None),
+        getattr(usage, "output_tokens", None),
+    )
+
+    return response
 
 async def main():
     previous_response_id = None
