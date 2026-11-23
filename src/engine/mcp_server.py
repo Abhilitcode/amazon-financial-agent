@@ -340,19 +340,50 @@ def find_limit(
         months,
     )
 
+
     if amount is None:
+        # Simulate the existing plan without adding a new commitment.
+        baseline_results = simulate_scenario(
+            profile,
+            base_scenario,
+            months,
+        )
+
+        # Check whether the minimum savings buffer was breached.
+        buffer_breached = any(
+            not result.buffer_safe
+            for result in baseline_results
+        )
+
+        # Check whether the monthly savings goal was missed.
+        savings_goal_missed = any(
+            not result.savings_goal_met
+            for result in baseline_results
+        )
+
+        # Identify the exact reason the existing plan is unsafe.
+        if buffer_breached and savings_goal_missed:
+            message = (
+                "Your existing financial plan breaches the minimum "
+                "savings buffer and misses the monthly savings goal."
+            )
+
+        elif buffer_breached:
+            message = (
+                "Your existing financial plan breaches the minimum "
+                "savings buffer."
+            )
+
+        else:
+            message = (
+                "Your existing financial plan misses the monthly "
+                "savings goal."
+            )
+
         return {
             "status": "unsafe",
-            "message": (
-                "Your existing financial plan breaches the minimum "
-                "savings buffer even without an additional commitment."
-            ),
+            "message": message,
             "maximum_commitment": None,
         }
 
-    return {
-        "status": "safe",
-        "maximum_commitment": amount,
-        "months": months,
-    }
 
