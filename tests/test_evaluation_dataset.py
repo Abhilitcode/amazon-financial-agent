@@ -20,3 +20,27 @@ def test_expense_case_checks_tool_and_arguments():
     case=next(c for c in json.loads(DATA.read_text(encoding="utf-8")) if c["case_id"]=="add_expense_complete")
     trace={"tool_calls":[{"name":"add_expense","arguments":{"name":"gym","amount":5000,"category":"flexible"}}],"clarification_asked":False,"state_changed":True}
     assert evaluate_case(case,trace)["passed"]
+
+
+def test_missing_state_change_evidence_fails():
+    case = {
+        "case_id": "no_mutation",
+        "expected_tool": None,
+        "must_clarify": False,
+        "must_not_mutate": True,
+        "required_argument_values": {},
+    }
+
+    trace_without_state = {
+        "tool_calls": [],
+        "clarification_asked": False,
+    }
+
+    result = evaluate_case(case, trace_without_state)
+
+    assert not result["passed"]
+    assert any(
+        "state_changed" in failure
+        for failure in result["failures"]
+    )
+

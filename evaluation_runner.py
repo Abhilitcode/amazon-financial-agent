@@ -19,7 +19,7 @@ def evaluate_case(case, trace):
     if case.get("must_clarify") and not trace.get("clarification_asked", False): failures.append("Expected clarification.")
     if tool is None and calls: failures.append(f"Expected no tool call before clarification; got {[c.get('name') for c in calls]}.")
     if tool and not any(c.get("name") == tool for c in calls): failures.append(f"Expected tool {tool!r} was not observed.")
-    if case.get("must_not_mutate") and trace.get("state_changed") is True: failures.append("Unexpected state mutation.")
+    if case.get("must_not_mutate") and trace.get("state_changed") is not False: failures.append("Expected state_changed=False, but it was missing or True.")
     for call in calls:
         if call.get("name") == tool:
             args = call.get("arguments", {})
