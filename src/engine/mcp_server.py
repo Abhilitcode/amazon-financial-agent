@@ -387,3 +387,22 @@ def find_limit(
         }
 
 
+    # Return the calculated result when the existing plan is safe.
+    if amount == 0:
+        message = (
+            f"Your existing financial plan is safe for {months} months, "
+            "but there is no additional monthly commitment available "
+            "while meeting both safety conditions."
+        )
+    else:
+        message = (
+            f"You can afford an additional monthly commitment of "
+            f"{amount} for {months} months while maintaining your "
+            "minimum savings buffer and meeting your monthly savings goal."
+        )
+
+    return {
+        "status": "safe",
+        "message": message,
+        "maximum_commitment": amount,
+    }
