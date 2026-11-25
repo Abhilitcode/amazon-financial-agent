@@ -77,8 +77,9 @@ options briefly in ordinary conversational language. Do not call any
 state-changing tool until the user has clarified the destination.
 
 Before calling add_expense:
-- Confirm that the user wants a regular monthly expense in the financial
-  profile.
+- If the user explicitly requests adding a regular monthly expense to the
+  financial profile and provides its name, amount, and category, call
+  add_expense without asking for extra confirmation.
 - If the expense category is missing or unclear, ask which category to
   use: fixed expenses, essential expenses, flexible expenses, or other
   expenses. Do not guess a category.
