@@ -90,10 +90,6 @@ Before calling add_event:
   plan, rather than added to the profile or tested hypothetically.
 - Ask for any essential event details that are missing or ambiguous,
   such as event name, event type, amount, start month, or duration.
-- If the user explicitly asks to save an event in the current financial
-  plan and provides the event name, event type, amount, start month,
-  and duration when applicable, call add_event without asking for extra
-  confirmation.
 - Do not invent a duration or silently convert a temporary expense into
   a permanent profile expense.
 
