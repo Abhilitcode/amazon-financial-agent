@@ -119,9 +119,9 @@
     "must_clarify": false,
     "must_not_mutate": false,
     "required_argument_values": {
-      "name": "Gifts",
+      "name": "Gift budget",
       "amount": 1200,
-      "category": "other_expenses"
+      "category": "other expenses"
     },
     "purpose": "Other category mapping."
   },

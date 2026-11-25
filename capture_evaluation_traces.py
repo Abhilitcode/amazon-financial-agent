@@ -14,7 +14,7 @@ import mcp_server as server
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-DATASET_PATH = PROJECT_ROOT / "tests" / "evaluation_cases.json"
+DATASET_PATH = PROJECT_ROOT / "tests" / "evaluation_cases_30.json"
 TRACE_PATH = PROJECT_ROOT / "evaluation_traces.jsonl"
 
 

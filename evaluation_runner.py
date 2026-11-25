@@ -28,7 +28,7 @@ def evaluate_case(case, trace):
     return {"case_id":case["case_id"],"passed":not failures,"failures":failures}
 
 def main():
-    p=argparse.ArgumentParser(); p.add_argument("--dataset",default="tests/evaluation_cases.json"); p.add_argument("--traces",default="evaluation_traces.jsonl"); a=p.parse_args()
+    p=argparse.ArgumentParser(); p.add_argument("--dataset",default="tests/evaluation_cases_30.json"); p.add_argument("--traces",default="evaluation_traces.jsonl"); a=p.parse_args()
     cases=json.loads(Path(a.dataset).read_text(encoding="utf-8")); traces=load_jsonl(a.traces)
     results=[evaluate_case(c,traces.get(c["case_id"])) for c in cases]; passed=sum(r["passed"] for r in results); total=len(results)
     print(f"Evaluation: {passed}/{total} passed ({passed/total*100 if total else 0:.1f}%)")
