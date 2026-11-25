@@ -1,0 +1,335 @@
+[
+  {
+    "case_id": "expense_missing_category",
+    "prompt": "Add a monthly ₹5,000 gym expense to my financial profile.",
+    "expected_tool": null,
+    "must_clarify": true,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Clarify category before adding."
+  },
+  {
+    "case_id": "expense_ambiguous_destination",
+    "prompt": "Add a ₹12,000 expense for my holiday.",
+    "expected_tool": null,
+    "must_clarify": true,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Clarify profile vs saved plan vs hypothetical."
+  },
+  {
+    "case_id": "add_expense_complete",
+    "prompt": "Add a monthly ₹5,000 gym expense to my profile under flexible expenses.",
+    "expected_tool": "add_expense",
+    "must_clarify": false,
+    "must_not_mutate": false,
+    "required_argument_values": {
+      "name": "Gym",
+      "amount": 5000,
+      "category": "flexible_expenses"
+    },
+    "purpose": "Use observed tool argument casing and canonical category."
+  },
+  {
+    "case_id": "hypothetical_event",
+    "prompt": "Hypothetically simulate a ₹10,000 monthly car EMI for 12 months starting month 1; don't save it.",
+    "expected_tool": "simulate",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {
+      "event_type": "recurring_expense",
+      "amount": 10000,
+      "start_month": 1,
+      "duration_months": 12
+    },
+    "purpose": "Hypothetical event routing and no mutation."
+  },
+  {
+    "case_id": "compare_scenarios",
+    "prompt": "Compare my current plan with a scenario adding a ₹10,000 monthly car EMI for 12 months.",
+    "expected_tool": "compare",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Comparison routing and no mutation."
+  },
+  {
+    "case_id": "current_plan_simulation",
+    "prompt": "Simulate my saved financial plan for 6 months.",
+    "expected_tool": "simulate_current_scenario",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {
+      "months": 6
+    },
+    "purpose": "Saved-plan simulation horizon."
+  },
+  {
+    "case_id": "find_limit",
+    "prompt": "Find the maximum additional monthly commitment I can afford over 24 months.",
+    "expected_tool": "find_limit",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {
+      "months": 24
+    },
+    "purpose": "Correct affordability tool and horizon."
+  },
+  {
+    "case_id": "profile_retrieval",
+    "prompt": "Show me my current financial profile.",
+    "expected_tool": "get_profile",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Profile retrieval."
+  },
+  {
+    "case_id": "profile_replacement_complete",
+    "prompt": "Replace my full financial profile with monthly salary ₹90,000, other income ₹2,000, savings ₹200,000, fixed expenses rent ₹22,000, essential expenses groceries ₹9,000, flexible expenses dining ₹3,000, other expenses gifts ₹1,000, monthly savings goal ₹20,000, and minimum buffer ₹40,000.",
+    "expected_tool": "set_profile",
+    "must_clarify": false,
+    "must_not_mutate": false,
+    "required_argument_values": {
+      "monthly_salary": 90000,
+      "other_income": 2000,
+      "current_savings": 200000,
+      "monthly_savings_goal": 20000,
+      "minimum_buffer": 40000
+    },
+    "purpose": "Full-profile replacement; capture must restore profile."
+  },
+  {
+    "case_id": "add_expense_essential",
+    "prompt": "Add a monthly ₹2,500 dental expense to my financial profile under essential expenses.",
+    "expected_tool": "add_expense",
+    "must_clarify": false,
+    "must_not_mutate": false,
+    "required_argument_values": {
+      "name": "Dental",
+      "amount": 2500,
+      "category": "essential_expenses"
+    },
+    "purpose": "Essential category mapping."
+  },
+  {
+    "case_id": "add_expense_other",
+    "prompt": "Add a monthly ₹1,200 gift budget to my financial profile under other expenses.",
+    "expected_tool": "add_expense",
+    "must_clarify": false,
+    "must_not_mutate": false,
+    "required_argument_values": {
+      "name": "Gifts",
+      "amount": 1200,
+      "category": "other_expenses"
+    },
+    "purpose": "Other category mapping."
+  },
+  {
+    "case_id": "expense_missing_amount",
+    "prompt": "Add a monthly gym membership to my financial profile under flexible expenses.",
+    "expected_tool": null,
+    "must_clarify": true,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Ask for amount rather than guessing."
+  },
+  {
+    "case_id": "expense_missing_category_profile_explicit",
+    "prompt": "Add a monthly ₹3,000 parking expense to my financial profile.",
+    "expected_tool": null,
+    "must_clarify": true,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Ask for category; do not infer it."
+  },
+  {
+    "case_id": "expense_destination_unclear_recurring",
+    "prompt": "Add a recurring monthly ₹8,000 childcare expense for the next 10 months.",
+    "expected_tool": null,
+    "must_clarify": true,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Clarify profile vs saved plan vs hypothetical for temporary recurring cost."
+  },
+  {
+    "case_id": "save_one_time_event",
+    "prompt": "Save a one-time laptop purchase of ₹90,000 in my current financial plan, starting in month 3.",
+    "expected_tool": "add_event",
+    "must_clarify": false,
+    "must_not_mutate": false,
+    "required_argument_values": {
+      "event_type": "one_time_expense",
+      "amount": 90000,
+      "start_month": 3
+    },
+    "purpose": "Saved one-time event routing and fields."
+  },
+  {
+    "case_id": "save_recurring_event",
+    "prompt": "Save a recurring car EMI of ₹10,000 per month in my current financial plan for 12 months, starting month 1.",
+    "expected_tool": "add_event",
+    "must_clarify": false,
+    "must_not_mutate": false,
+    "required_argument_values": {
+      "event_type": "recurring_expense",
+      "amount": 10000,
+      "start_month": 1,
+      "duration_months": 12
+    },
+    "purpose": "Saved recurring event routing and fields."
+  },
+  {
+    "case_id": "saved_event_missing_duration",
+    "prompt": "Save a recurring car EMI of ₹10,000 per month in my current financial plan, starting month 1.",
+    "expected_tool": null,
+    "must_clarify": true,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Ask for duration rather than inventing one."
+  },
+  {
+    "case_id": "saved_event_missing_type",
+    "prompt": "Save a ₹15,000 expense in my current financial plan for month 4.",
+    "expected_tool": null,
+    "must_clarify": true,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Clarify one-time vs recurring."
+  },
+  {
+    "case_id": "hypothetical_one_time_expense",
+    "prompt": "Without saving anything, simulate a one-time ₹60,000 laptop expense in month 5 over a 12-month projection.",
+    "expected_tool": "simulate",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {
+      "event_type": "one_time_expense",
+      "amount": 60000,
+      "start_month": 5,
+      "months": 12
+    },
+    "purpose": "One-time hypothetical event and no mutation."
+  },
+  {
+    "case_id": "hypothetical_income_change",
+    "prompt": "Hypothetically simulate additional income of ₹8,000 per month for 6 months, starting month 2, over a 12-month projection. Do not save it.",
+    "expected_tool": "simulate",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {
+      "event_type": "income_change",
+      "amount": 8000,
+      "start_month": 2,
+      "duration_months": 6,
+      "months": 12
+    },
+    "purpose": "Hypothetical income-change fields."
+  },
+  {
+    "case_id": "hypothetical_missing_duration",
+    "prompt": "Hypothetically simulate a recurring car expense of ₹10,000 per month starting month 1, but I haven't decided how long it will last.",
+    "expected_tool": null,
+    "must_clarify": true,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Clarify missing recurring-event duration."
+  },
+  {
+    "case_id": "current_plan_12_months",
+    "prompt": "Run a simulation of my saved financial plan for 12 months.",
+    "expected_tool": "simulate_current_scenario",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {
+      "months": 12
+    },
+    "purpose": "Explicit saved-plan horizon."
+  },
+  {
+    "case_id": "current_plan_default_horizon",
+    "prompt": "Simulate my current saved financial plan.",
+    "expected_tool": "simulate_current_scenario",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Saved-plan routing with default horizon."
+  },
+  {
+    "case_id": "compare_two_hypothetical_options",
+    "prompt": "Compare two options against my current plan: a ₹5,000 monthly expense for 12 months, and a ₹7,000 monthly expense for 12 months. Start both in month 1.",
+    "expected_tool": "compare",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Comparison of two alternatives."
+  },
+  {
+    "case_id": "compare_three_options",
+    "prompt": "Compare my current plan with three alternatives: add ₹5,000 monthly for 6 months, add ₹8,000 monthly for 6 months, or add ₹10,000 monthly for 6 months. Start each in month 1.",
+    "expected_tool": "compare",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {},
+    "purpose": "Three-scenario comparison routing."
+  },
+  {
+    "case_id": "find_limit_12_months",
+    "prompt": "Find the maximum additional monthly commitment I can afford for 12 months while maintaining my minimum buffer and savings goal.",
+    "expected_tool": "find_limit",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {
+      "months": 12
+    },
+    "purpose": "find_limit with 12-month horizon."
+  },
+  {
+    "case_id": "find_limit_36_months",
+    "prompt": "Calculate my maximum safe additional monthly commitment over 36 months.",
+    "expected_tool": "find_limit",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {
+      "months": 36
+    },
+    "purpose": "find_limit with longer horizon."
+  },
+  {
+    "case_id": "find_limit_with_hypothetical_event",
+    "prompt": "Without saving it, find my maximum additional monthly commitment over 24 months assuming a recurring daycare expense of ₹5,000 per month for 12 months starting month 1.",
+    "expected_tool": "find_limit",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {
+      "months": 24
+    },
+    "purpose": "find_limit with optional event; later verify result is non-null."
+  },
+  {
+    "case_id": "find_limit_buffer_and_goal",
+    "prompt": "What is the largest additional monthly commitment I can afford for 24 months while keeping my minimum savings buffer and meeting my monthly savings goal?",
+    "expected_tool": "find_limit",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {
+      "months": 24
+    },
+    "purpose": "Explicit find_limit intent and conditions."
+  },
+  {
+    "case_id": "hypothetical_expense_percentage_change",
+    "prompt": "Without saving it, simulate a 10% increase in my groceries expense starting month 2 and lasting 6 months, using a 12-month projection.",
+    "expected_tool": "simulate",
+    "must_clarify": false,
+    "must_not_mutate": true,
+    "required_argument_values": {
+      "event_type": "expense_percentage_change",
+      "target_expense": "groceries",
+      "start_month": 2,
+      "duration_months": 6,
+      "months": 12
+    },
+    "purpose": "Supported percentage-change event and target expense."
+  }
+]

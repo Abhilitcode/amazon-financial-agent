@@ -1,0 +1,7 @@
+{"case_id": "expense_missing_category", "tool_calls": [], "clarification_asked": true, "state_changed": false}
+{"case_id": "expense_ambiguous_destination", "tool_calls": [], "clarification_asked": true, "state_changed": false}
+{"case_id": "add_expense_complete", "tool_calls": [{"name": "add_expense", "arguments": {"name": "Gym", "amount": 5000, "category": "flexible_expenses"}}], "clarification_asked": false, "state_changed": true}
+{"case_id": "hypothetical_event", "tool_calls": [{"name": "simulate", "arguments": {"event_name": "Car EMI ₹10,000/month", "event_type": "recurring_expense", "amount": 10000, "start_month": 1, "duration_months": 12, "percentage": null, "target_expense": null, "months": 24}}], "clarification_asked": false, "state_changed": false}
+{"case_id": "compare_scenarios", "tool_calls": [{"name": "compare", "arguments": {"scenarios": [{"name": "Current Plan", "events": []}, {"name": "With ₹10,000/month car EMI for 12 months", "events": [{"event_name": "Car EMI", "event_type": "recurring_expense", "amount": 10000, "start_month": 1, "duration_months": 12, "percentage": null, "target_expense": null}]}], "months": 24}}], "clarification_asked": false, "state_changed": false}
+{"case_id": "current_plan_simulation", "tool_calls": [{"name": "simulate_current_scenario", "arguments": {"months": 6}}], "clarification_asked": false, "state_changed": false}
+{"case_id": "find_limit", "tool_calls": [{"name": "find_limit", "arguments": {"months": 24}}], "clarification_asked": false, "state_changed": false}
